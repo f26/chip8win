@@ -1,2 +1,7 @@
 # chip8win
-A CHIP-8 emulator for Windows
+A CHIP-8 emulator for Windows written in C and using the Windows API.  Tested on Windows 10, but probably works fine on Windows 7 and 11 too.
+
+Keys are mapped as follows:
+
+* 0-9 Number pad
+* A-F Keyboard
