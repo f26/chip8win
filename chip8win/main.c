@@ -1,7 +1,6 @@
 #include "main.h"
 #include "chip8.h"
 
-#include <stdint.h>
 #include <stdio.h>
 #include <time.h>
 
@@ -11,6 +10,10 @@
 // ********************************************************************************************************************
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmdShow)
 {
+
+    memset(_toastMsg, 0, sizeof(_toastMsg));
+    QueryPerformanceCounter(&_toastMsgTick);
+
     // Create the full path to the sound file and save it off, so it can always be loaded as working directory changes
     // with loading of ROMs
     memset(_chip8_SoundFile, 0, sizeof(_chip8_SoundFile));
@@ -210,6 +213,29 @@ void handle_WM_PAINT(HWND hWnd)
         // Cleanup
         DeleteObject(hfont3);
         DeleteObject(hBrush);
+
+        // Toast messages are only shown if registers are visible due to flickering issues
+        // TODO: Figure out a smarter way to draw toasts to prevent flicker
+        uint64_t currentTime;
+        QueryPerformanceFrequency(&currentTime);
+        {
+            if (getElapsedTimeSinceHighPerfTick(_toastMsgTick) < 3)
+            {
+                HFONT hFont = CreateFont(0, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+                                         CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, VARIABLE_PITCH, TEXT("Courier New"));
+
+                RECT rc;
+                rc.left = 15;
+                rc.top = 15;
+                rc.right = 500;
+                rc.bottom = 75;
+
+                SetTextColor(hDC, RGB(255, 0, 0));
+                SelectObject(hDC, hFont);
+                DrawTextA(hDC, _toastMsg, -1, &rc, DT_LEFT);
+                DeleteObject(hFont);
+            }
+        }
     }
 
     EndPaint(hWnd, &ps);
@@ -261,6 +287,32 @@ void handle_WM_KEY(UINT msg, WPARAM wParam)
     case 0x44: _chip8_Keyboard[0xD] = value; break;
     case 0x45: _chip8_Keyboard[0xE] = value; break;
     case 0x46: _chip8_Keyboard[0xF] = value; break;
+
+    case VK_ADD:
+    {
+        
+        if (_chip8_ClockSpeed == 1) // Minimum speed is 1Hz
+            _chip8_ClockSpeed = 100;
+        else if (_chip8_ClockSpeed < 1000) // Below 1000, increase by 100
+            _chip8_ClockSpeed += 100;
+        else if (_chip8_ClockSpeed < 50000) // Above 1000, increase by 100 to a max of 50000
+            _chip8_ClockSpeed += 1000;
+
+        setToastMsg("Emulation speed: %i Hz", _chip8_ClockSpeed);
+        break;
+    }
+    case VK_SUBTRACT:
+    {
+        if (_chip8_ClockSpeed > 1000) // Above 1000, decrease by 1000
+            _chip8_ClockSpeed -= 1000;
+        else if (_chip8_ClockSpeed > 100) // Below 1000, decrease by 100
+            _chip8_ClockSpeed -= 100;
+        else if (_chip8_ClockSpeed == 100) // Minimum speed is 1 Hz
+            _chip8_ClockSpeed = 1;
+
+        setToastMsg("Emulation speed: %i Hz", _chip8_ClockSpeed);
+        break;
+    }
     }
 }
 
@@ -322,4 +374,16 @@ void handle_WM_COMMAND(HWND hWnd, WPARAM wParam, bool* eraseBkgHandled)
         break;
     }
     }
+}
+
+// ********************************************************************************************************************
+// ********************************************************************************************************************
+void setToastMsg(const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    vsprintf_s(_toastMsg, sizeof(_toastMsg), format, args);
+    va_end(args);
+
+    QueryPerformanceCounter(&_toastMsgTick);
 }

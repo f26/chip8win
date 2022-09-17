@@ -5,3 +5,5 @@ Keys are mapped as follows:
 
 * 0-9 Number pad
 * A-F Keyboard
+
+Emulation speed defaults to 500 Hz but can be increased/decreased by using the number pad + and - keys.

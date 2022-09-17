@@ -6,9 +6,10 @@
 // ********************************************************************************************************************
 void chip8Run()
 {
-    uint64_t prevTick;
+    uint64_t prevTick; // When the last instruction was processed
+    QueryPerformanceCounter(&prevTick);
 
-    while (_chip8_Running && QueryPerformanceCounter(&prevTick))
+    while (_chip8_Running)
     {
         Sleep(10);
 
@@ -20,13 +21,14 @@ void chip8Run()
         // Update the delay/sound timer as necessary
         chip8TimerUpdate();
 
-        // Run enough instructions to simulate a clock speed of CHIP8_CLOCK_SPEED_HZ
-        uint32_t instructionsToExecute = getElapsedTimeSinceHighPerfTick(prevTick) * CHIP8_CLOCK_SPEED_HZ;
+        // Run enough instructions to simulate a clock speed of _chip8_ClockSpeed
+        int32_t instructionsToExecute = getElapsedTimeSinceHighPerfTick(prevTick) * _chip8_ClockSpeed;
         while (instructionsToExecute-- > 0)
         {
             uint16_t ins = chip8ReadInstruction();
             if (ins == 0) break;
             chip8ProcessInstruction(ins);
+            QueryPerformanceCounter(&prevTick);
         }
     }
 }
@@ -442,6 +444,8 @@ void chip8Init()
 {
     _chip8_SoundPlaying = false;
     _chip8_Reset = false;
+
+    _chip8_ClockSpeed = CHIP8_CLOCK_SPEED_HZ;
 
     _chip8_Mutex = CreateMutex(NULL, FALSE, NULL);
 

@@ -3,6 +3,7 @@
 
 #include "Windows.h"
 #include <stdbool.h>
+#include <stdint.h>
 
 #define IDM_FILE_RESET 1
 #define IDM_FILE_LOAD 2
@@ -17,6 +18,8 @@ HWND _hWnd;                // Main window, used to redraw screen
 bool _running;             // Used to let GUI thread know to exit
 char _startDirectory[260]; // Stores the path to the start directory
 bool _showRegisters;       // Flag used to track when to draw registers
+char _toastMsg[100];       // Buffer to hold the toast message
+uint64_t _toastMsgTick;    // The tick when the toast msg was set, from QueryPerformanceCounter()
 
 // Body of the thread that runs the emulator
 void threadChip8();
@@ -38,5 +41,8 @@ void handle_WM_KEY(UINT msg, WPARAM wParam);
 
 // Handler for messages from the menu
 void handle_WM_COMMAND(HWND hWnd, WPARAM wParam, bool* eraseBkgd);
+
+// Sets the toast message that temporarily informs the user of information
+void setToastMsg(const char* format, ...);
 
 #endif

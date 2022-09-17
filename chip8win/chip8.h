@@ -25,6 +25,7 @@ uint8_t _chip8_SoundTimerReg;
 uint16_t _chip8_ProgramCounter;
 uint8_t _chip8_StackPointer;
 uint16_t _chip8_Stack[16];
+uint32_t _chip8_ClockSpeed;
 
 bool _chip8_Screen[CHIP8_SCREEN_WIDTH][CHIP8_SCREEN_HEIGHT];
 
