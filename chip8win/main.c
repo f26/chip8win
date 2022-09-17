@@ -8,7 +8,8 @@
 
 // ********************************************************************************************************************
 // ********************************************************************************************************************
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmdShow)
+int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine,
+                    _In_ int nShowCmd)
 {
 
     memset(_toastMsg, 0, sizeof(_toastMsg));
@@ -17,9 +18,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine
     // Create the full path to the sound file and save it off, so it can always be loaded as working directory changes
     // with loading of ROMs
     memset(_chip8_SoundFile, 0, sizeof(_chip8_SoundFile));
-    GetCurrentDirectory(sizeof(_chip8_SoundFile), _chip8_SoundFile);
+    GetCurrentDirectory(sizeof(_chip8_SoundFile), (LPWSTR)_chip8_SoundFile);
 
-    wcscat_s(_chip8_SoundFile, sizeof(_chip8_SoundFile), TEXT("\\300Hz.wav"));
+    wcscat_s((wchar_t*)_chip8_SoundFile, sizeof(_chip8_SoundFile), TEXT("\\300Hz.wav"));
 
     _showRegisters = false;
 
@@ -290,7 +291,7 @@ void handle_WM_KEY(UINT msg, WPARAM wParam)
 
     case VK_ADD:
     {
-        
+
         if (_chip8_ClockSpeed == 1) // Minimum speed is 1Hz
             _chip8_ClockSpeed = 100;
         else if (_chip8_ClockSpeed < 1000) // Below 1000, increase by 100
@@ -336,7 +337,7 @@ void handle_WM_COMMAND(HWND hWnd, WPARAM wParam, bool* eraseBkgHandled)
         memset(&ofn, 0, sizeof(ofn));
         ofn.lStructSize = sizeof(ofn);
         ofn.hwndOwner = hWnd;
-        ofn.lpstrFile = szFile;
+        ofn.lpstrFile = (LPWSTR)szFile;
         ofn.nMaxFile = sizeof(szFile);
         ofn.lpstrFilter = TEXT("All\0*.*\0");
         ofn.nFilterIndex = 1;
@@ -347,7 +348,7 @@ void handle_WM_COMMAND(HWND hWnd, WPARAM wParam, bool* eraseBkgHandled)
 
         if (GetOpenFileName(&ofn) == TRUE)
         {
-            SetCurrentDirectory(_startDirectory);
+            SetCurrentDirectory((LPCWSTR)_startDirectory);
             chip8LoadRom(szFile);
             chip8Reset();
         }
@@ -365,7 +366,7 @@ void handle_WM_COMMAND(HWND hWnd, WPARAM wParam, bool* eraseBkgHandled)
         int32_t offset = -REGISTER_DISPLAY_HEIGHT_PX;
         if (_showRegisters) offset = REGISTER_DISPLAY_HEIGHT_PX;
         SetWindowPos(hWnd, NULL, lpRect.left, lpRect.top, lpRect.right - lpRect.left,
-                     lpRect.bottom - lpRect.top + offset, NULL);
+                     lpRect.bottom - lpRect.top + offset, SWP_NOMOVE);
         break;
     }
     case IDM_FILE_EXIT:
