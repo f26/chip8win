@@ -1,0 +1,1 @@
+Various ROMs I found online.  Most work ok, a select few seem to have issues (looking at you, animal race).  Haven't investigated the details for the broken ones yet.

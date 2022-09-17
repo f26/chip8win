@@ -50,3 +50,11 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Visual Studio config folder
+.vs
+
+# Build output folder
+x64
+
+*.user
