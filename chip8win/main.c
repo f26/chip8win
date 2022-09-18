@@ -150,6 +150,13 @@ LRESULT CALLBACK handleWin32Message(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
         PostQuitMessage(0);
         return 0;
     }
+    case WM_MOVE:
+    {
+        // Redraw while moving to eliminate artifacts from having a portion of the window hidden and then made visible
+        // TODO: Redraw in a smarter way to prevent having to redraw entire screen?
+        _redrawScreen = true;
+        break;
+    }
 
         // Various messages captured during debug of selective screen redrawing.  Every single one of these was observed
         // as the window as interacted with.  Left here in case they are useful in the future.
@@ -180,7 +187,7 @@ LRESULT CALLBACK handleWin32Message(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
         case WM_NCCREATE:
         case WM_NCCALCSIZE:
         case WM_WINDOWPOSCHANGED:
-        case WM_MOVE:
+
         case WM_SHOWWINDOW:
         case WM_DWMNCRENDERINGCHANGED:
         case WM_KILLFOCUS:
@@ -229,8 +236,8 @@ void handle_WM_PAINT(HWND hWnd)
     HBRUSH hBrushBg = CreateSolidBrush(RGB(24, 24, 24));
     HBRUSH hBrushFg = CreateSolidBrush(RGB(128, 128, 128));
 
-    // Get a copy of the screen.  Static copy is used to compare to the previous frame so we can be smart about drawing
-    // rectangles and not have to draw the entire screen every time.
+    // Get a copy of the screen.  Static copy is used to compare to the previous frame so we can be smart about
+    // drawing rectangles and not have to draw the entire screen every time.
     static bool prevScreen[CHIP8_SCREEN_WIDTH][CHIP8_SCREEN_HEIGHT] = {0};
     bool screen[CHIP8_SCREEN_WIDTH][CHIP8_SCREEN_HEIGHT];
     chip8GetScreen(&screen);

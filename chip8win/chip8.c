@@ -16,6 +16,7 @@ void chip8Run()
         if (_chip8_Reset)
         {
             chip8Init();
+            QueryPerformanceCounter(&prevTick);
         }
 
         // Update the delay/sound timer as necessary
