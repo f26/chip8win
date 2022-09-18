@@ -502,7 +502,7 @@ void chip8Reset() { _chip8_Reset = true; }
 
 // ********************************************************************************************************************
 // ********************************************************************************************************************
-int32_t chip8LoadRom(char* filename)
+int32_t chip8LoadRom(WCHAR* filename)
 {
     FILE* fp;
 
@@ -522,7 +522,7 @@ int32_t chip8LoadRom(char* filename)
     memset(_chip8_Mem + CHIP8_PROGRAM_START_OFFSET, 0, CHIP8_MEM_SIZE - CHIP8_PROGRAM_START_OFFSET);
 
     // Read the ROM
-    const uint32_t MAX_SIZE = 3584;
+    const uint32_t MAX_SIZE = CHIP8_MEM_SIZE - CHIP8_PROGRAM_START_OFFSET;
     int32_t size = fread(_chip8_Mem + CHIP8_PROGRAM_START_OFFSET, 1, MAX_SIZE, fp);
     printf("%i bytes read\n", size);
 

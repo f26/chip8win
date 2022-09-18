@@ -409,8 +409,8 @@ void handle_WM_COMMAND(HWND hWnd, WPARAM wParam, bool* eraseBkgHandled)
     }
     case IDM_FILE_LOAD:
     {
-        char szFile[260];
-        memset(szFile, 0, sizeof szFile);
+        WCHAR szFile[260];
+        memset(szFile, 0, sizeof(szFile));
 
         OPENFILENAME ofn;
         memset(&ofn, 0, sizeof(ofn));

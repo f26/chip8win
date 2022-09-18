@@ -59,7 +59,7 @@ void chip8Shutdown();
 void chip8Reset();
 
 // Loads a Chip-8 ROM at PROGRAM_START_OFFSET
-int32_t chip8LoadRom(char* filename);
+int32_t chip8LoadRom(WCHAR* filename);
 
 // Surprise: processes a single instruction
 void chip8ProcessInstruction(uint16_t instruction);
