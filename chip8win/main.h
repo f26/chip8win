@@ -20,6 +20,7 @@ char _startDirectory[260]; // Stores the path to the start directory
 bool _showRegisters;       // Flag used to track when to draw registers
 char _toastMsg[100];       // Buffer to hold the toast message
 uint64_t _toastMsgTick;    // The tick when the toast msg was set, from QueryPerformanceCounter()
+bool _redrawScreen;        // Set when the entire CHIP-8 screen needs to be redrawn
 
 // Body of the thread that runs the emulator
 void threadChip8();

@@ -448,6 +448,7 @@ void chip8Init()
     _chip8_ClockSpeed = CHIP8_CLOCK_SPEED_HZ;
 
     _chip8_Mutex = CreateMutex(NULL, FALSE, NULL);
+    _chip8_Mutex_Screen = CreateMutex(NULL, FALSE, NULL);
 
     // Clear registers/stack/memory space
     memset(_chip8_Msg, 0, CHIP8_STR_SIZE);
@@ -724,4 +725,13 @@ void chip8TimerUpdate()
         PlaySound(NULL, NULL, NULL);
         _chip8_SoundPlaying = false;
     }
+}
+
+// ********************************************************************************************************************
+// ********************************************************************************************************************
+void chip8GetScreen(bool* pScreen)
+{
+    WaitForSingleObject(_chip8_Mutex_Screen, INFINITE);
+    memcpy(pScreen, _chip8_Screen, sizeof(_chip8_Screen));
+    ReleaseMutex(_chip8_Mutex_Screen);
 }

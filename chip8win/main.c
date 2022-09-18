@@ -11,7 +11,7 @@
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine,
                     _In_ int nShowCmd)
 {
-
+    _redrawScreen = true;
     memset(_toastMsg, 0, sizeof(_toastMsg));
     QueryPerformanceCounter(&_toastMsgTick);
 
@@ -117,7 +117,10 @@ LRESULT CALLBACK handleWin32Message(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
         // This message clears the window before painting occurs if we don't ignore it.  This will cause flickering
         // if we don't prematurely handle it.
         if (!eraseBkgHandled)
+        {
             eraseBkgHandled = true;
+            _redrawScreen = true;
+        }
         else
             return 1;
         break;
@@ -128,6 +131,7 @@ LRESULT CALLBACK handleWin32Message(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
         break;
     }
     case WM_PAINT:
+    case WM_NCPAINT: // Does this go here?
     {
         handle_WM_PAINT(hWnd);
         break;
@@ -146,6 +150,61 @@ LRESULT CALLBACK handleWin32Message(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
         PostQuitMessage(0);
         return 0;
     }
+
+        // Various messages captured during debug of selective screen redrawing.  Every single one of these was observed
+        // as the window as interacted with.  Left here in case they are useful in the future.
+
+        /*
+        case WM_MOUSEMOVE:
+        case WM_MOUSEHOVER:
+        case WM_MOUSEACTIVATE:
+        case WM_NCHITTEST:
+        case WM_SETCURSOR:
+        case WM_NCMOUSEMOVE:
+        case WM_NCMOUSELEAVE:
+        case WM_WINDOWPOSCHANGING:
+        case 0x93: // WM_UAHINITMENU
+        case 0x91: // WM_UAHDRAWMENU
+        case 0x92: // WM_UAHDRAWMENUITEM
+        case 0x94: // WM_UAHMEASUREMENUITEM
+        case WM_NCLBUTTONDOWN:
+        case WM_ACTIVATEAPP:
+        case WM_NCACTIVATE:
+        case WM_ACTIVATE:
+        case WM_IME_SETCONTEXT:
+        case WM_IME_NOTIFY:
+        case WM_SETFOCUS:
+        case WM_SYSCOMMAND:
+        case WM_GETICON:
+        case WM_GETMINMAXINFO:
+        case WM_NCCREATE:
+        case WM_NCCALCSIZE:
+        case WM_WINDOWPOSCHANGED:
+        case WM_MOVE:
+        case WM_SHOWWINDOW:
+        case WM_DWMNCRENDERINGCHANGED:
+        case WM_KILLFOCUS:
+        case WM_CAPTURECHANGED:
+        case WM_ENTERSIZEMOVE:
+        case WM_CANCELMODE:
+        case WM_MOVING:
+        case WM_EXITSIZEMOVE:
+        case WM_NCLBUTTONDBLCLK:
+        case WM_LBUTTONUP:
+        case WM_LBUTTONDOWN:
+        case WM_SYSKEYDOWN:
+        case WM_SIZING:
+        case WM_ENTERMENULOOP:
+        case WM_INITMENU:
+        case WM_MENUSELECT:
+        case WM_INITMENUPOPUP:
+        case WM_EXITMENULOOP:
+        case WM_ENTERIDLE:
+        case WM_UNINITMENUPOPUP:
+        case WM_ENABLE:
+        {
+            break;
+        }*/
     }
 
     return DefWindowProcW(hWnd, msg, wParam, lParam);
@@ -169,21 +228,33 @@ void handle_WM_PAINT(HWND hWnd)
     // Draw the pixels of the screen
     HBRUSH hBrushBg = CreateSolidBrush(RGB(24, 24, 24));
     HBRUSH hBrushFg = CreateSolidBrush(RGB(128, 128, 128));
+
+    // Get a copy of the screen.  Static copy is used to compare to the previous frame so we can be smart about drawing
+    // rectangles and not have to draw the entire screen every time.
+    static bool prevScreen[CHIP8_SCREEN_WIDTH][CHIP8_SCREEN_HEIGHT] = {0};
+    bool screen[CHIP8_SCREEN_WIDTH][CHIP8_SCREEN_HEIGHT];
+    chip8GetScreen(&screen);
+
     for (int y = 0; y < CHIP8_SCREEN_HEIGHT; y++)
     {
         for (int x = 0; x < CHIP8_SCREEN_WIDTH; x++)
         {
             SelectObject(hDC, hBrushFg);
-            if (_chip8_Screen[x][y] == false) SelectObject(hDC, hBrushBg);
+            if (screen[x][y] == false) SelectObject(hDC, hBrushBg);
 
-            Rectangle(hDC, x * PIXEL_SIZE, y * PIXEL_SIZE + headerOffset, x * PIXEL_SIZE + PIXEL_SIZE,
-                      y * PIXEL_SIZE + PIXEL_SIZE + headerOffset);
+            if (screen[x][y] != prevScreen[x][y] || _redrawScreen)
+            {
+                Rectangle(hDC, x * PIXEL_SIZE, y * PIXEL_SIZE + headerOffset, x * PIXEL_SIZE + PIXEL_SIZE,
+                          y * PIXEL_SIZE + PIXEL_SIZE + headerOffset);
+            }
         }
     }
+    memcpy(prevScreen, screen, sizeof(screen));
+    _redrawScreen = false;
     DeleteObject(hBrushBg);
     DeleteObject(hBrushFg);
 
-    // Draw the registers as necessary
+    // Draw the registers if necessary
     if (_showRegisters)
     {
         HBRUSH hBrush = CreateSolidBrush(RGB(0, 0, 0));
@@ -359,6 +430,7 @@ void handle_WM_COMMAND(HWND hWnd, WPARAM wParam, bool* eraseBkgHandled)
         // Toggle whether or not registers are shown
         _showRegisters = !_showRegisters;
         *eraseBkgHandled = false;
+        _redrawScreen = true;
 
         // Resize window to properly display with/without registers
         RECT lpRect;

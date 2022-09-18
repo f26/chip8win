@@ -13,7 +13,7 @@
 #define CHIP8_PROGRAM_START_OFFSET 0x200
 #define CHIP8_HEX_SPRITE_START_OFFSET 0x100
 #define CHIP8_HEX_SPRITE_SIZE_PER 5
-#define CHIP8_CLOCK_SPEED_HZ 500 // Online sources say 500Hz is a good CHIP-8 emulator clock speed  TODO: Make this configurable?
+#define CHIP8_CLOCK_SPEED_HZ 500 // Online sources say 500Hz is a good CHIP-8 emulator clock speed  TODO: Configurable?
 #define CHIP8_STR_SIZE 2048
 
 // Various registers and other strucures defined in the CHIP-8 spec
@@ -41,6 +41,7 @@ uint8_t _chip8_STLastSetValue;   // The value the delay timer was last set to
 bool _chip8_ShiftQuirkMode;      // Different CHIP-8 docs disagree on exact details of SHL/SHR
 bool _chip8_Reset;               // If true, re-initializes all registers
 HANDLE _chip8_Mutex;             // Mutex used for exclusive access to the debug msg
+HANDLE _chip8_Mutex_Screen;      // Mutex used for exclusive access to the screen buffer
 
 // Initializes the chip 8 emulator.  Must be called before *any* other function.
 void chip8Init();
@@ -69,9 +70,13 @@ uint16_t chip8ReadInstruction();
 // Helper for the timer thread.  Used to calculate how many 60Hz ticks have elapsed while it slept.
 uint64_t getElapsed60HzTicksSinceHighPerfTick(uint64_t startTick);
 
+// Given a tick (QueryPerformanceCounter), get the elapsed time in seconds
 double getElapsedTimeSinceHighPerfTick(uint64_t startTick);
 
 // Creates a summary of the various registers as well as a description of the current instruction
 void chip8BuildDebugString(uint16_t instruction);
+
+// Gets a copy of the screen buffer.  Thread-safe.
+void chip8GetScreen(bool* pScreen);
 
 #endif
