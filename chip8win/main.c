@@ -16,13 +16,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     memset(_toastMsg, 0, sizeof(_toastMsg));
     QueryPerformanceCounter(&_toastMsgTick);
 
-    // Create the full path to the sound file and save it off, so it can always be loaded as working directory changes
-    // with loading of ROMs
-    memset(_chip8_SoundFile, 0, sizeof(_chip8_SoundFile));
-    GetCurrentDirectory(sizeof(_chip8_SoundFile), (LPWSTR)_chip8_SoundFile);
-
-    wcscat_s((wchar_t*)_chip8_SoundFile, sizeof(_chip8_SoundFile), TEXT("\\300Hz.wav"));
-
     _showRegisters = false;
 
     // Create window

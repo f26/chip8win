@@ -32,7 +32,6 @@ bool _chip8_Screen[CHIP8_SCREEN_WIDTH][CHIP8_SCREEN_HEIGHT];
 bool _chip8_Keyboard[16];        // Tracks status of the keys
 bool _chip8_Running;             // True while the emulator is running
 char _chip8_Msg[CHIP8_STR_SIZE]; // String description of the various structures
-char _chip8_SoundFile[260];      // Location of the sound file (note: wchar because windows)
 bool _chip8_SoundPlaying;        // Flag that tracks whether or not a sound is playing
 uint64_t _chip8_DTStartTick;     // The system timer at the moment the delay timer was set
 uint64_t _chip8_STStartTick;     // The system timer at the moment the sound timer was set
