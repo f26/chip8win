@@ -257,57 +257,65 @@ void handle_WM_PAINT(HWND hWnd)
     // Draw the registers if necessary
     if (_showRegisters)
     {
+        // Create an off-screen buffer to double buffer the register display.  This reduces flickering at high GUI
+        // refresh rates. http://www.winprog.org/tutorial/bitmaps.html
+        HDC hdcMem = CreateCompatibleDC(hDC);
+        HBITMAP hbmMem = CreateCompatibleBitmap(hDC, REGISTER_DISPLAY_WIDTH_PX, REGISTER_DISPLAY_HEIGHT_PX);
+        HANDLE hOld = SelectObject(hdcMem, hbmMem);
+
         HBRUSH hBrush = CreateSolidBrush(RGB(0, 0, 0));
-        SelectObject(hDC, hBrush);
+        SelectObject(hdcMem, hBrush);
         RECT rc;
         rc.left = 0;
         rc.top = 0;
         rc.bottom = rc.top + REGISTER_DISPLAY_HEIGHT_PX;
         rc.right = rc.left + REGISTER_DISPLAY_WIDTH_PX;
-        Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);
+        Rectangle(hdcMem, rc.left, rc.top, rc.right, rc.bottom);
 
         // Set up the font
-        HFONT hfont3 = CreateFont(0, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-                                  CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, VARIABLE_PITCH, TEXT("Courier New"));
-        SelectObject(hDC, hfont3);
+        HFONT hFont = CreateFont(0, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+                                 CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, VARIABLE_PITCH, TEXT("Courier New"));
+        SelectObject(hdcMem, hFont);
 
         // Set up the colors.  Green = hacker colors, obviously
-        SetBkColor(hDC, RGB(0, 0, 0));
-        SetTextColor(hDC, RGB(0, 255, 0));
+        SetBkColor(hdcMem, RGB(0, 0, 0));
+        SetTextColor(hdcMem, RGB(0, 255, 0));
 
         // Print the debug msg to screen
         // TODO: Come up with a more elegant way to do this?  Maybe wrap the mutex in an accessor function or have
         // a method that returns a copy of the message for us to use, to keep the mutex wrangling internal to chip8
         WaitForSingleObject(_chip8_Mutex, INFINITE);
-        DrawTextA(hDC, _chip8_Msg, -1, &rc, DT_LEFT);
+        DrawTextA(hdcMem, _chip8_Msg, -1, &rc, DT_LEFT);
         ReleaseMutex(_chip8_Mutex);
 
         // Cleanup
-        DeleteObject(hfont3);
+        DeleteObject(hFont);
         DeleteObject(hBrush);
 
         // Toast messages are only shown if registers are visible due to flickering issues
         // TODO: Figure out a smarter way to draw toasts to prevent flicker
         uint64_t currentTime;
         QueryPerformanceFrequency(&currentTime);
+        if (getElapsedTimeSinceHighPerfTick(_toastMsgTick) < 3)
         {
-            if (getElapsedTimeSinceHighPerfTick(_toastMsgTick) < 3)
-            {
-                HFONT hFont = CreateFont(0, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-                                         CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, VARIABLE_PITCH, TEXT("Courier New"));
+            HFONT hFont = CreateFont(0, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+                                     CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, VARIABLE_PITCH, TEXT("Courier New"));
+            RECT rc;
+            rc.left = rc.top = 15;
+            rc.right = 500;
+            rc.bottom = 75;
 
-                RECT rc;
-                rc.left = 15;
-                rc.top = 15;
-                rc.right = 500;
-                rc.bottom = 75;
-
-                SetTextColor(hDC, RGB(255, 0, 0));
-                SelectObject(hDC, hFont);
-                DrawTextA(hDC, _toastMsg, -1, &rc, DT_LEFT);
-                DeleteObject(hFont);
-            }
+            SetTextColor(hdcMem, RGB(255, 0, 0));
+            SelectObject(hdcMem, hFont);
+            DrawTextA(hdcMem, _toastMsg, -1, &rc, DT_LEFT);
+            DeleteObject(hFont);
         }
+
+        // Swap the off-screen buffer for the on-screen one, then clean up
+        BitBlt(hDC, 0, 0, REGISTER_DISPLAY_WIDTH_PX, REGISTER_DISPLAY_HEIGHT_PX, hdcMem, 0, 0, SRCCOPY);
+        SelectObject(hdcMem, hOld);
+        DeleteObject(hbmMem);
+        DeleteDC(hdcMem);
     }
 
     EndPaint(hWnd, &ps);
