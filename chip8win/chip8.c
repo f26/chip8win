@@ -715,8 +715,7 @@ void chip8TimerUpdate()
     // If no sound is playing but it should be, start playing it
     if (_chip8_SoundTimerReg > 0 && !_chip8_SoundPlaying)
     {
-        // TODO: This won't work if the working directory is changed, should probably be updated to a better way
-        PlaySound(_chip8_SoundFile, NULL, SND_FILENAME | SND_LOOP | SND_ASYNC);
+        PlaySound(MAKEINTRESOURCE(_chip8_SoundId), _chip8_ModuleInstance, SND_RESOURCE | SND_ASYNC);
         _chip8_SoundPlaying = true;
     }
 
@@ -735,4 +734,12 @@ void chip8GetScreen(bool* pScreen)
     WaitForSingleObject(_chip8_Mutex_Screen, INFINITE);
     memcpy(pScreen, _chip8_Screen, sizeof(_chip8_Screen));
     ReleaseMutex(_chip8_Mutex_Screen);
+}
+
+// ********************************************************************************************************************
+// ********************************************************************************************************************
+void chip8InitSound(HINSTANCE hInstance, uint32_t id)
+{
+    _chip8_ModuleInstance = hInstance;
+    _chip8_SoundId = id;
 }

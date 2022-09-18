@@ -135,12 +135,16 @@
   <ItemGroup>
     <ClInclude Include="chip8.h" />
     <ClInclude Include="main.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <Media Include="300hz.wav" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="chip8win.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

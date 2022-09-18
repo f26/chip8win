@@ -1,5 +1,6 @@
 #include "main.h"
 #include "chip8.h"
+#include "resource.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -40,6 +41,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
                           CHIP8_SCREEN_WIDTH * PIXEL_SIZE + 18, CHIP8_SCREEN_HEIGHT * PIXEL_SIZE + 60, NULL, NULL,
                           hInstance, NULL);
 
+    chip8InitSound(hInstance, IDR_WAVE1);
     chip8Init();
 
     HMENU CreateMenu();

@@ -32,6 +32,9 @@
     <ClInclude Include="main.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Media Include="300hz.wav">
@@ -42,5 +45,10 @@
     <None Include="..\README.md">
       <Filter>Other</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="chip8win.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

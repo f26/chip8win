@@ -42,6 +42,8 @@ bool _chip8_ShiftQuirkMode;      // Different CHIP-8 docs disagree on exact deta
 bool _chip8_Reset;               // If true, re-initializes all registers
 HANDLE _chip8_Mutex;             // Mutex used for exclusive access to the debug msg
 HANDLE _chip8_Mutex_Screen;      // Mutex used for exclusive access to the screen buffer
+HINSTANCE _chip8_ModuleInstance; // Handle to the module running the emulator.  Used to play sounds.
+uint32_t _chip8_SoundId;         // The integer ID of the resource that contains the WAV file for the sound.
 
 // Initializes the chip 8 emulator.  Must be called before *any* other function.
 void chip8Init();
@@ -78,5 +80,8 @@ void chip8BuildDebugString(uint16_t instruction);
 
 // Gets a copy of the screen buffer.  Thread-safe.
 void chip8GetScreen(bool* pScreen);
+
+// Initializes the values used when playing the sound tone
+void chip8InitSound(HINSTANCE hInstance, uint32_t id);
 
 #endif
