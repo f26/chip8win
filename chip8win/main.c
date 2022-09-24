@@ -316,7 +316,7 @@ void handle_WM_PAINT(HWND hWnd)
         // TODO: Figure out a smarter way to draw toasts to prevent flicker
         uint64_t currentTime;
         QueryPerformanceFrequency(&currentTime);
-        if (getElapsedTimeSinceHighPerfTick(_toastMsgTick) < 3)
+        if (getElapsedTimeSinceHighPerfTick(_toastMsgTick) < 2)
         {
             HFONT hFont = CreateFont(0, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
                                      CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, VARIABLE_PITCH, TEXT("Courier New"));
@@ -391,10 +391,15 @@ void handle_WM_KEY(UINT msg, WPARAM wParam)
     case VK_RETURN:
     {
         _chip8_StepMode = false;
+        setToastMsg("Step mode disabled");
         break;
     }
     case VK_SPACE:
     {
+        if (!_chip8_StepMode)
+        {
+            setToastMsg("Step mode enabled");
+        }
         _chip8_StepOnIt = true;
         _chip8_StepMode = true;
         break;
