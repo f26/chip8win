@@ -43,6 +43,9 @@ HANDLE _chip8_Mutex;             // Mutex used for exclusive access to the debug
 HANDLE _chip8_Mutex_Screen;      // Mutex used for exclusive access to the screen buffer
 HINSTANCE _chip8_ModuleInstance; // Handle to the module running the emulator.  Used to play sounds.
 uint32_t _chip8_SoundId;         // The integer ID of the resource that contains the WAV file for the sound.
+bool _chip8_StepMode;            // Flag to know when step-by-step instruction execution is enabled
+bool _chip8_StepOnIt;            // Flag to indicate user has pressed button to execute a single instruction
+double _chip8_StepRateLimit;     // Minimum amount of time between individual steps
 
 // Initializes the chip 8 emulator.  Must be called before *any* other function.
 void chip8Init();

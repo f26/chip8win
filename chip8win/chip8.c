@@ -26,10 +26,33 @@ void chip8Run()
         int32_t instructionsToExecute = getElapsedTimeSinceHighPerfTick(prevTick) * _chip8_ClockSpeed;
         while (instructionsToExecute-- > 0)
         {
+            // In step mode we only execute the instruction if we've been told to
+            if (_chip8_StepMode)
+            {
+                if (_chip8_StepOnIt && getElapsedTimeSinceHighPerfTick(prevTick) < _chip8_StepRateLimit)
+                {
+                    // Not enough time has elapsed since the last instruction
+                    _chip8_StepOnIt = false;
+                    break;
+                }
+                else if (!_chip8_StepOnIt)
+                {
+                    // In step mode but have not been commanded to execute an instruction
+                    break;
+                }
+            }
+
             uint16_t ins = chip8ReadInstruction();
             if (ins == 0) break;
             chip8ProcessInstruction(ins);
             QueryPerformanceCounter(&prevTick);
+
+            // If we're in step mode, we've done a single step, disable the flag and break
+            if (_chip8_StepOnIt)
+            {
+                _chip8_StepOnIt = false;
+                break;
+            }
         }
     }
 }
@@ -64,8 +87,8 @@ void chip8ProcessInstruction(uint16_t instruction)
     else if (instruction == 0x00EE)
     {
         // 00EE - RET
-        // Return from a subroutine. The interpreter sets the program counter to the address at the top of the stack,
-        // then subtracts 1 from the stack pointer.
+        // Return from a subroutine. The interpreter sets the program counter to the address at the top of the
+        // stack, then subtracts 1 from the stack pointer.
         _chip8_ProgramCounter = _chip8_Stack[_chip8_StackPointer];
         if (_chip8_StackPointer > 0) _chip8_StackPointer--;
     }
@@ -78,8 +101,8 @@ void chip8ProcessInstruction(uint16_t instruction)
     else if ((instruction & 0xF000) == 0x2000)
     {
         // 2nnn - CALL addr
-        // Call subroutine at nnn. The interpreter increments the stack pointer, then puts the current PC on the top of
-        // the stack. The PC is then set to nnn.
+        // Call subroutine at nnn. The interpreter increments the stack pointer, then puts the current PC on the top
+        // of the stack. The PC is then set to nnn.
         _chip8_Stack[++_chip8_StackPointer] = _chip8_ProgramCounter + 2;
         _chip8_ProgramCounter = nnn;
     }
@@ -108,8 +131,8 @@ void chip8ProcessInstruction(uint16_t instruction)
     else if ((instruction & 0xF00F) == 0x5000)
     {
         // 5xy0 - SE Vx, Vy
-        // Skip next instruction if Vx = Vy.The interpreter compares register Vx to register Vy, and if they are equal,
-        // increments the program counter by 2.
+        // Skip next instruction if Vx = Vy.The interpreter compares register Vx to register Vy, and if they are
+        // equal, increments the program counter by 2.
         _chip8_ProgramCounter += 2;
         if (_chip8_GenRegs[x] == _chip8_GenRegs[y])
         {
@@ -140,9 +163,9 @@ void chip8ProcessInstruction(uint16_t instruction)
     else if ((instruction & 0xF00F) == 0x8001)
     {
         // 8xy1 - OR Vx, Vy
-        // Set Vx = Vx OR Vy. Performs a bitwise OR on the values of Vx and Vy, then stores the result in Vx. A bitwise
-        // OR compares the corrseponding bits from two values, and if either bit is 1, then the same bit in the result
-        // is also 1. Otherwise, it is 0.
+        // Set Vx = Vx OR Vy. Performs a bitwise OR on the values of Vx and Vy, then stores the result in Vx. A
+        // bitwise OR compares the corrseponding bits from two values, and if either bit is 1, then the same bit in
+        // the result is also 1. Otherwise, it is 0.
         _chip8_GenRegs[x] |= _chip8_GenRegs[y];
         _chip8_ProgramCounter += 2;
     }
@@ -150,26 +173,26 @@ void chip8ProcessInstruction(uint16_t instruction)
     {
         // 8xy2 - AND Vx, Vy
         // Set Vx = Vx AND Vy. Performs a bitwise AND on the values of Vx and Vy, then stores the result in Vx. A
-        // bitwise AND compares the corrseponding bits from two values, and if both bits are 1, then the same bit in the
-        // result is also 1. Otherwise, it is 0.
+        // bitwise AND compares the corrseponding bits from two values, and if both bits are 1, then the same bit in
+        // the result is also 1. Otherwise, it is 0.
         _chip8_GenRegs[x] &= _chip8_GenRegs[y];
         _chip8_ProgramCounter += 2;
     }
     else if ((instruction & 0xF00F) == 0x8003)
     {
         // 8xy3 - XOR Vx, Vy
-        // Set Vx = Vx XOR Vy. Performs a bitwise exclusive OR on the values of Vx and Vy, then stores the result in Vx.
-        // An exclusive OR compares the corrseponding bits from two values, and if the bits are not both the same, then
-        // the corresponding bit in the result is set to 1. Otherwise, it is 0.
+        // Set Vx = Vx XOR Vy. Performs a bitwise exclusive OR on the values of Vx and Vy, then stores the result in
+        // Vx. An exclusive OR compares the corrseponding bits from two values, and if the bits are not both the
+        // same, then the corresponding bit in the result is set to 1. Otherwise, it is 0.
         _chip8_GenRegs[x] ^= _chip8_GenRegs[y];
         _chip8_ProgramCounter += 2;
     }
     else if ((instruction & 0xF00F) == 0x8004)
     {
         // 8xy4 - ADD Vx, Vy
-        // Set Vx = Vx + Vy, set VF = carry. The values of Vx and Vy are added together. If the result is greater than 8
-        // bits (i.e., > 255,) VF is set to 1, otherwise 0. Only the lowest 8 bits of the result are kept, and stored in
-        // Vx.
+        // Set Vx = Vx + Vy, set VF = carry. The values of Vx and Vy are added together. If the result is greater
+        // than 8 bits (i.e., > 255,) VF is set to 1, otherwise 0. Only the lowest 8 bits of the result are kept,
+        // and stored in Vx.
         uint16_t sum = _chip8_GenRegs[x] + _chip8_GenRegs[y];
         _chip8_GenRegs[x] = sum & 0x00FF;
         if ((sum & 0xFF00) > 0)
@@ -181,8 +204,8 @@ void chip8ProcessInstruction(uint16_t instruction)
     else if ((instruction & 0xF00F) == 0x8005)
     {
         // 8xy5 - SUB Vx, Vy
-        // Set Vx = Vx - Vy, set VF = NOT borrow. If Vx > Vy, then VF is set to 1, otherwise 0. Then Vy is subtracted
-        // from Vx, and the results stored in Vx.
+        // Set Vx = Vx - Vy, set VF = NOT borrow. If Vx > Vy, then VF is set to 1, otherwise 0. Then Vy is
+        // subtracted from Vx, and the results stored in Vx.
         if (_chip8_GenRegs[x] > _chip8_GenRegs[y])
             _chip8_GenRegs[0xF] = 1;
         else
@@ -210,8 +233,8 @@ void chip8ProcessInstruction(uint16_t instruction)
     else if ((instruction & 0xF00F) == 0x8007)
     {
         // 8xy7 - SUBN Vx, Vy
-        // Set Vx = Vy - Vx, set VF = NOT borrow. If Vy > Vx, then VF is set to 1, otherwise 0. Then Vx is subtracted
-        // from Vy, and the results stored in Vx.
+        // Set Vx = Vy - Vx, set VF = NOT borrow. If Vy > Vx, then VF is set to 1, otherwise 0. Then Vx is
+        // subtracted from Vy, and the results stored in Vx.
         if (_chip8_GenRegs[y] > _chip8_GenRegs[x])
             _chip8_GenRegs[0xF] = 1;
         else
@@ -223,9 +246,8 @@ void chip8ProcessInstruction(uint16_t instruction)
     else if ((instruction & 0xF00F) == 0x800E)
     {
         // 8xyE - SHL Vx {, Vy}
-        // Set Vx = Vx SHL 1. If the most-significant bit of Vx is 1, then VF is set to 1, otherwise to 0. Then Vx is
-        // multiplied by 2.
-        // NOTE: This does not agree with other chip 8 instruction references?!
+        // Set Vx = Vx SHL 1. If the most-significant bit of Vx is 1, then VF is set to 1, otherwise to 0. Then Vx
+        // is multiplied by 2. NOTE: This does not agree with other chip 8 instruction references?!
 
         uint8_t valToShift = _chip8_GenRegs[y];
         if (_chip8_ShiftQuirkMode) valToShift = _chip8_GenRegs[x];
@@ -273,12 +295,13 @@ void chip8ProcessInstruction(uint16_t instruction)
     else if ((instruction & 0xF000) == 0xD000)
     {
         // Dxyn - DRW Vx, Vy, nibble
-        // Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision. The interpreter reads n
-        // bytes from memory, starting at the address stored in I. These bytes are then displayed as sprites on screen
-        // at coordinates (Vx, Vy). Sprites are XORed onto the existing screen. If this causes any pixels to be erased,
-        // VF is set to 1, otherwise it is set to 0. If the sprite is positioned so part of it is outside the
-        // coordinates of the display, it wraps around to the opposite side of the screen. See instruction 8xy3 for more
-        // information on XOR, and section 2.4, Display, for more information on the Chip-8 screen and sprites.
+        // Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision. The interpreter
+        // reads n bytes from memory, starting at the address stored in I. These bytes are then displayed as sprites
+        // on screen at coordinates (Vx, Vy). Sprites are XORed onto the existing screen. If this causes any pixels
+        // to be erased, VF is set to 1, otherwise it is set to 0. If the sprite is positioned so part of it is
+        // outside the coordinates of the display, it wraps around to the opposite side of the screen. See
+        // instruction 8xy3 for more information on XOR, and section 2.4, Display, for more information on the
+        // Chip-8 screen and sprites.
 
         uint8_t x = _chip8_GenRegs[(instruction & 0x0F00) >> 8];
         uint8_t y = _chip8_GenRegs[(instruction & 0x00F0) >> 4];
@@ -349,8 +372,8 @@ void chip8ProcessInstruction(uint16_t instruction)
     else if ((instruction & 0xF0FF) == 0xF00A)
     {
         // Fx0A - LD Vx, K
-        // Wait for a key press, store the value of the key in Vx. All execution stops until a key is pressed, then the
-        // value of that key is stored in Vx.
+        // Wait for a key press, store the value of the key in Vx. All execution stops until a key is pressed, then
+        // the value of that key is stored in Vx.
         uint32_t key = 0;
         do
         {
@@ -445,6 +468,9 @@ void chip8Init()
 {
     _chip8_SoundPlaying = false;
     _chip8_Reset = false;
+    _chip8_StepMode = false;
+    _chip8_StepOnIt = false;
+    _chip8_StepRateLimit = 0.2;
 
     _chip8_ClockSpeed = CHIP8_CLOCK_SPEED_HZ;
 

@@ -31,8 +31,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     // Create the window.  Sizes are magic numbers, which is not optimal.  It would be nice if there was a way to
     // programmatically adjust window size either here or when drawing the screen.
     _hWnd = CreateWindowW(wc.lpszClassName, L"CHIP-8 Emulator", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100,
-                          CHIP8_SCREEN_WIDTH * PIXEL_SIZE + 18, CHIP8_SCREEN_HEIGHT * PIXEL_SIZE + 60, NULL, NULL,
-                          hInstance, NULL);
+                          CHIP8_SCREEN_WIDTH * DEFAULT_PIXEL_SIZE + 18, CHIP8_SCREEN_HEIGHT * DEFAULT_PIXEL_SIZE + 60,
+                          NULL, NULL, hInstance, NULL);
 
     chip8InitSound(hInstance, IDR_WAVE1);
     chip8Init();
@@ -152,7 +152,6 @@ LRESULT CALLBACK handleWin32Message(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
         _redrawScreen = true;
         break;
     }
-
         // Various messages captured during debug of selective screen redrawing.  Every single one of these was observed
         // as the window as interacted with.  Left here in case they are useful in the future.
 
@@ -237,6 +236,25 @@ void handle_WM_PAINT(HWND hWnd)
     bool screen[CHIP8_SCREEN_WIDTH][CHIP8_SCREEN_HEIGHT];
     chip8GetScreen(&screen);
 
+    // Recalculate pixel size depending on window dimensions so that the screen always takes up as big a region as it
+    // can while maintaining the proper aspect ratio.  If screen is too small, a minimum is enforced.
+    int pxSize = DEFAULT_PIXEL_SIZE;
+    RECT rect;
+    GetClientRect(WindowFromDC(hDC), &rect);
+    double aspectRatio = (rect.right * 1.0) / (rect.bottom - headerOffset);
+    if (aspectRatio <= 2.0)
+    {
+        // Aspect ratio < 2 means width is smaller than twice height, so width is limiting factor
+        // NOTE: If exactly 2, both calculations will give same result, doesn't matter which branch we take
+        pxSize = (rect.right * 1.0) / CHIP8_SCREEN_WIDTH;
+    }
+    else
+    {
+        // Aspect ratio > 2 means width is larger than twice height, so height is limiting aspect
+        pxSize = ((rect.bottom - headerOffset) * 1.0) / CHIP8_SCREEN_HEIGHT;
+    }
+    if (pxSize < MIN_PIXEL_SIZE) pxSize = MIN_PIXEL_SIZE;
+
     for (int y = 0; y < CHIP8_SCREEN_HEIGHT; y++)
     {
         for (int x = 0; x < CHIP8_SCREEN_WIDTH; x++)
@@ -246,8 +264,8 @@ void handle_WM_PAINT(HWND hWnd)
 
             if (screen[x][y] != prevScreen[x][y] || _redrawScreen)
             {
-                Rectangle(hDC, x * PIXEL_SIZE, y * PIXEL_SIZE + headerOffset, x * PIXEL_SIZE + PIXEL_SIZE,
-                          y * PIXEL_SIZE + PIXEL_SIZE + headerOffset);
+                Rectangle(hDC, x * pxSize, y * pxSize + headerOffset, x * pxSize + pxSize,
+                          y * pxSize + pxSize + headerOffset);
             }
         }
     }
@@ -369,6 +387,18 @@ void handle_WM_KEY(UINT msg, WPARAM wParam)
     case 0x44: _chip8_Keyboard[0xD] = value; break;
     case 0x45: _chip8_Keyboard[0xE] = value; break;
     case 0x46: _chip8_Keyboard[0xF] = value; break;
+
+    case VK_RETURN:
+    {
+        _chip8_StepMode = false;
+        break;
+    }
+    case VK_SPACE:
+    {
+        _chip8_StepOnIt = true;
+        _chip8_StepMode = true;
+        break;
+    }
 
     case VK_ADD:
     {
