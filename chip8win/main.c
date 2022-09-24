@@ -410,8 +410,11 @@ void handle_WM_KEY(UINT msg, WPARAM wParam)
 
     case VK_RETURN:
     {
-        _chip8_StepMode = false;
-        setToastMsg("Step mode disabled");
+        if (_chip8_StepMode)
+        {
+            _chip8_StepMode = false;
+            setToastMsg("Step mode disabled");
+        }
         break;
     }
     case VK_SPACE:
