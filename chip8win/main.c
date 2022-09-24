@@ -101,6 +101,24 @@ LRESULT CALLBACK handleWin32Message(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
         break;
     }
 
+    case WM_MENUSELECT:
+    {
+        HMENU hmenu = (HMENU)lParam;
+        if (hmenu == NULL) break;
+        char buffer[100] = {0};
+        GetMenuStringA(hmenu, (wParam & 0xFF), buffer, sizeof(buffer), MF_BYPOSITION);
+        if (strcmp(buffer, "&Help") == 0)
+        {
+            MessageBoxA(hWnd,
+                        "Emulator input:\n   Numpad 0-9: [0-9]\n   A-F: [A-F]\n\nEmulator configuration:\n   "
+                        "Increase emulation speed: [NUMPAD +]\n   Decrease emulation speed: [NUMPAD -]\n   Single-step "
+                        "instruction: [SPACEBAR]\n   Exit single-step mode: [ENTER]",
+                        "Help I'm stuck in an emulator!", MB_OK);
+        }
+
+        break;
+    }
+
     case WM_COMMAND: // Generated when a menu item is interacted with
     {
         handle_WM_COMMAND(hWnd, wParam, &eraseBkgHandled);
@@ -350,6 +368,7 @@ void handle_WM_CREATE(HWND hWnd)
     HMENU hMenubar = CreateMenu();
     HMENU hFileMenu = CreateMenu();
     HMENU hViewMenu = CreateMenu();
+    HMENU hHelpMenu = CreateMenu();
 
     AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_RESET, L"&Reset");
     AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_LOAD, L"&Load");
@@ -360,6 +379,7 @@ void handle_WM_CREATE(HWND hWnd)
 
     AppendMenuW(hMenubar, MF_POPUP, (UINT_PTR)hFileMenu, L"&File");
     AppendMenuW(hMenubar, MF_POPUP, (UINT_PTR)hViewMenu, L"&View");
+    AppendMenuW(hMenubar, MF_POPUP, (UINT_PTR)hHelpMenu, L"&Help");
     SetMenu(hWnd, hMenubar);
 }
 

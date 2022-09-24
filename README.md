@@ -10,4 +10,6 @@ Keys are mapped as follows:
 
 Emulation speed defaults to 500 Hz but can be increased/decreased by using the number pad + and - keys.
 
+Step-by-step execution mode can be enabled by pressing spacebar.  Enter is used to exit step-by-step execution.
+
 Enjoy!
